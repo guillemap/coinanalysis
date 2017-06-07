@@ -1,0 +1,3 @@
+[submodule "python-bittrex"]
+	path = python-bittrex
+	url = https://github.com/mandiblegrip/python-bittrex.git
