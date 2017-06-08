@@ -3,6 +3,7 @@ import sys
 import os.path
 sys.path.append(os.path.dirname(__file__) + "/../python-bittrex/bittrex")
 from bittrex import Bittrex
+from datetime import datetime
 
 
 class Market(object):
@@ -58,3 +59,19 @@ class Market(object):
         raise Exception(
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
+
+    def get_price_trend(self):
+        """
+        Used to obtain a series of datetime-price tuples representing a market's price trend
+        :return: list of tuples
+        """
+        price_trend = []
+        for entry in self.history:
+            price_trend.append(
+                (datetime.strptime(entry['TimeStamp'].split(".")[0], "%Y-%m-%dT%H:%M:%S"),
+                    entry["Price"])
+            )
+        return price_trend
+
+    def __str__(self):
+        return "{:s}\t{:s}".format(self.name, str(self.ticker))
