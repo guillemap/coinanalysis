@@ -81,3 +81,4 @@ def get_active_markets():
         return active_markets
     else:
         raise Exception(response['message'])
+

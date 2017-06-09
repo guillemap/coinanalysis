@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import sys
 import os.path
 sys.path.append(os.path.dirname(__file__) + "/../python-bittrex/bittrex")
 from bittrex import Bittrex, BUY_ORDERBOOK, SELL_ORDERBOOK, BOTH_ORDERBOOK
 import pandas as pd
+from datetime import datetime
 
+LEDGER_TIME_FORMAT = "%Y/%m/%d %H:%M:%S"
 
 class Market(object):
     """
@@ -19,7 +22,7 @@ class Market(object):
         :type bittrex: Bittrex
         """
         self.name = name
-        self.basis, self.coin = self.name.split("-")
+        self.basis, self.code = self.name.split("-")
         if bittrex:
             self.bittrex = bittrex
         else:
@@ -36,6 +39,10 @@ class Market(object):
 
     @property
     def history(self):
+        """
+        Columns of the returned DataFrame are:
+        "FillType", "Id", "OrderType", "Price", "Quantity", "TimeStamp" and "Total"
+        """
         response = self.bittrex.get_market_history(self.name)
         if response['success']:
             df = pd.DataFrame(response['result'])
@@ -63,10 +70,10 @@ class Market(object):
     def get_both_orderbooks(self, depth=20):
         response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
         if response['success']:
-            return (
-                pd.DataFrame(response['result']['buy']),
-                pd.DataFrame(response['result']['sell'])
-            )
+            return {
+                "buy": pd.DataFrame(response['result']['buy']),
+                "sell": pd.DataFrame(response['result']['sell'])
+            }
         raise Exception(
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
@@ -82,6 +89,27 @@ class Market(object):
 
     def get_price_time_series(self):
         return self.history[["TimeStamp", "Price"]]
+
+    def get_ledger_cli_entry(self):
+        """
+        Get a string that can be entered into a pricedb for ledger CLI
+        :return: str
+        """
+        if self.basis in ("$", "¥", "£"):
+            #TODO make this more robust
+            return "P {:s} {:s} {:s}{:.2f}".format(
+                    datetime.now().strftime(LEDGER_TIME_FORMAT),
+                    self.code,
+                    self.basis,
+                    self.ticker["Last"]
+                    )
+        return "P {:s} {:s} {:f} {:s}".format(
+                datetime.now().strftime(LEDGER_TIME_FORMAT),
+                self.code,
+                self.ticker["Last"],
+                self.basis
+                )
+
 
     def __str__(self):
         return "{:s}\t{:s}".format(self.name, str(self.ticker))
