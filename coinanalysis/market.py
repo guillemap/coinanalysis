@@ -2,8 +2,7 @@
 import sys
 import os.path
 sys.path.append(os.path.dirname(__file__) + "/../python-bittrex/bittrex")
-from bittrex import Bittrex
-from datetime import datetime
+from bittrex import Bittrex, BUY_ORDERBOOK, SELL_ORDERBOOK, BOTH_ORDERBOOK
 import pandas as pd
 
 
@@ -46,11 +45,28 @@ class Market(object):
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
 
-    @property
-    def orderbook(self):
-        response = self.bittrex.get_orderbook(self.name)
+    def _get_orderbook(self, depth_type, depth=20):
+        response = self.bittrex.get_orderbook(self.name, depth_type, depth)
         if response['success']:
-            return response['result']
+            return pd.DataFrame(response['result'])
+        raise Exception(
+            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+        )
+
+    def get_buy_orderbook(self, depth=20):
+        return self._get_orderbook(BUY_ORDERBOOK, depth)
+
+    def get_sell_orderbook(self, depth=20):
+        return self._get_orderbook(SELL_ORDERBOOK, depth)
+
+
+    def get_both_orderbooks(self, depth=20):
+        response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
+        if response['success']:
+            return (
+                pd.DataFrame(response['result']['buy']),
+                pd.DataFrame(response['result']['sell'])
+            )
         raise Exception(
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
