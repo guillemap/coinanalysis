@@ -20,6 +20,7 @@ class Market(object):
         :type bittrex: Bittrex
         """
         self.name = name
+        self.basis, self.coin = self.name.split("-")
         if bittrex:
             self.bittrex = bittrex
         else:
@@ -29,7 +30,7 @@ class Market(object):
     def summary(self):
         response = self.bittrex.get_market_summary(self.name)
         if response['success']:
-            return response['result']
+            return response['result'][0]
         raise Exception(
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
