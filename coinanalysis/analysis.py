@@ -6,11 +6,14 @@ from bittrex import Bittrex
 from market import Market
 
 
-def get_highest_volume_markets(number=5):
+def get_highest_volume_markets(number=5, base=False):
     """
     Used to obtain the highest volume markets on Bittrex, sorted from highest volume to lowest volume
     :param number: How many markets you want
     :type number: int
+    :param base: If true, return the highest base volume markets rather than just the highest
+    :            volume markets
+    :type base: bool
     :return: list of Market objects
     """
     b = Bittrex(None, None)
@@ -18,7 +21,10 @@ def get_highest_volume_markets(number=5):
     if response['success']:
         volumes_markets = []
         for summary in response['result']:
-            volumes_markets.append((summary['Volume'], summary['MarketName']))
+            volumes_markets.append(
+                    (summary["BaseVolume"] if base else summary['Volume'],
+                    summary['MarketName'])
+                    )
         volumes_markets.sort(reverse=True)
         markets = []
         for volume_market in volumes_markets[:number]:
