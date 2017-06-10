@@ -9,6 +9,7 @@ from datetime import datetime
 
 LEDGER_TIME_FORMAT = "%Y/%m/%d %H:%M:%S"
 
+
 class Market(object):
     """
     Used to provide analysis of a market on Bittrex.
@@ -52,6 +53,19 @@ class Market(object):
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
 
+    @property
+    def ticker(self):
+        """
+        Returns a dictionary of prices with keys "Last", "Bid" and "Ask".
+        :return: dict
+        """
+        response = self.bittrex.get_ticker(self.name)
+        if response['success']:
+            return response['result']
+        raise Exception(
+            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+        )
+
     def _get_orderbook(self, depth_type, depth=20):
         response = self.bittrex.get_orderbook(self.name, depth_type, depth)
         if response['success']:
@@ -66,7 +80,6 @@ class Market(object):
     def get_sell_orderbook(self, depth=20):
         return self._get_orderbook(SELL_ORDERBOOK, depth)
 
-
     def get_both_orderbooks(self, depth=20):
         response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
         if response['success']:
@@ -74,15 +87,6 @@ class Market(object):
                 "buy": pd.DataFrame(response['result']['buy']),
                 "sell": pd.DataFrame(response['result']['sell'])
             }
-        raise Exception(
-            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
-        )
-
-    @property
-    def ticker(self):
-        response = self.bittrex.get_ticker(self.name)
-        if response['success']:
-            return response['result']
         raise Exception(
             "Could not retrieve data from Bittrex: {:s}".format(response['message'])
         )
@@ -109,7 +113,6 @@ class Market(object):
                 self.ticker["Last"],
                 self.basis
                 )
-
 
     def __str__(self):
         return "{:s}\t{:s}".format(self.name, str(self.ticker))
