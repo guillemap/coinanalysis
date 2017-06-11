@@ -24,19 +24,42 @@ class Market(object):
         """
         self.name = name
         self.basis, self.code = self.name.split("-")
-        if bittrex:
-            self.bittrex = bittrex
-        else:
-            self.bittrex = Bittrex(None, None)
+        self.bittrex = bittrex if bittrex else Bittrex(None, None)
+        self.update()
+
+    def update(self, lazy=True):
+        """
+        Set all the data fields of the Market to None.  They are lazily populated when
+        called for if lazy is True.
+        :param lazy: if lazy, Market data are lazily populated upon calling them.
+        :return:
+        """
+        if lazy:
+            self._summary = None
+            self._history = None
+            self._ticker = None
+            self._buy_orderbook = None
+            self._sell_orderbook = None
+            self._both_orderbooks = None
+            return 0
+        self.summary
+        self.history
+        self.ticker
+        self.get_buy_orderbook()
+        self.get_sell_orderbook()
+        self.get_both_orderbooks()
 
     @property
     def summary(self):
-        response = self.bittrex.get_market_summary(self.name)
-        if response['success']:
-            return response['result'][0]
-        raise Exception(
-            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
-        )
+        if not self._summary:
+            response = self.bittrex.get_market_summary(self.name)
+            if response['success']:
+                self._summary = response['result'][0]
+                return self._summary
+            raise Exception(
+                "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+            )
+        return self._summary
 
     @property
     def history(self):
@@ -44,14 +67,16 @@ class Market(object):
         Columns of the returned DataFrame are:
         "FillType", "Id", "OrderType", "Price", "Quantity", "TimeStamp" and "Total"
         """
-        response = self.bittrex.get_market_history(self.name)
-        if response['success']:
-            df = pd.DataFrame(response['result'])
-            df["TimeStamp"] = pd.to_datetime(df["TimeStamp"])
-            return df
-        raise Exception(
-            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
-        )
+        if not self._history:
+            response = self.bittrex.get_market_history(self.name)
+            if response['success']:
+                self._history = pd.DataFrame(response['result'])
+                self._history["TimeStamp"] = pd.to_datetime(self._history["TimeStamp"])
+                return self._history
+            raise Exception(
+                "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+            )
+        return self._history
 
     @property
     def ticker(self):
@@ -59,12 +84,15 @@ class Market(object):
         Returns a dictionary of prices with keys "Last", "Bid" and "Ask".
         :return: dict
         """
-        response = self.bittrex.get_ticker(self.name)
-        if response['success']:
-            return response['result']
-        raise Exception(
-            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
-        )
+        if not self._ticker:
+            response = self.bittrex.get_ticker(self.name)
+            if response['success']:
+                self._ticker = response['result']
+                return self._ticker
+            raise Exception(
+                "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+            )
+        return self._ticker
 
     def _get_orderbook(self, depth_type, depth=20):
         response = self.bittrex.get_orderbook(self.name, depth_type, depth)
@@ -75,24 +103,28 @@ class Market(object):
         )
 
     def get_buy_orderbook(self, depth=20):
-        return self._get_orderbook(BUY_ORDERBOOK, depth)
+        if not self._buy_orderbook:
+            self._buy_orderbook = self._get_orderbook(BUY_ORDERBOOK, depth)
+        return self._buy_orderbook
 
     def get_sell_orderbook(self, depth=20):
-        return self._get_orderbook(SELL_ORDERBOOK, depth)
+        if not self._sell_orderbook:
+            self._sell_orderbook = self._get_orderbook(SELL_ORDERBOOK, depth)
+        return self._sell_orderbook
 
     def get_both_orderbooks(self, depth=20):
-        response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
-        if response['success']:
-            return {
-                "buy": pd.DataFrame(response['result']['buy']),
-                "sell": pd.DataFrame(response['result']['sell'])
-            }
-        raise Exception(
-            "Could not retrieve data from Bittrex: {:s}".format(response['message'])
-        )
-
-    def get_price_time_series(self):
-        return self.history[["TimeStamp", "Price"]]
+        if not self._both_orderbooks:
+            response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
+            if response['success']:
+                self._both_orderbooks = {
+                    "buy": pd.DataFrame(response['result']['buy']),
+                    "sell": pd.DataFrame(response['result']['sell'])
+                }
+                return self._both_orderbooks
+            raise Exception(
+                "Could not retrieve data from Bittrex: {:s}".format(response['message'])
+            )
+        return self._both_orderbooks
 
     def get_ledger_cli_entry(self):
         """

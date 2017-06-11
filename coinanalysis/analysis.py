@@ -2,6 +2,7 @@
 from market import Market
 import sys
 import os.path
+
 sys.path.append(os.path.dirname(__file__) + "/../python-bittrex/bittrex")
 from bittrex import Bittrex
 
@@ -28,14 +29,14 @@ def get_highest_volume_markets(number=10, base_volume=True, basis=None):
                 if summary["MarketName"].split("-")[0] == basis:
                     volumes_markets.append(
                         (summary["BaseVolume"] if base_volume else summary['Volume'],
-                            summary['MarketName'])
+                         summary['MarketName'])
                     )
         else:
             for summary in response['result']:
                 volumes_markets.append(
-                        (summary["BaseVolume"] if base_volume else summary['Volume'],
-                            summary['MarketName'])
-                        )
+                    (summary["BaseVolume"] if base_volume else summary['Volume'],
+                     summary['MarketName'])
+                )
         volumes_markets.sort(reverse=True)
         markets = []
         for volume_market in volumes_markets[:number]:
@@ -81,4 +82,3 @@ def get_active_markets():
         return active_markets
     else:
         raise Exception(response['message'])
-
