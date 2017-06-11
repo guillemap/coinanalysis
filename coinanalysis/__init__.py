@@ -1,6 +1,6 @@
-__all__ = ["analysis", "market", "visual", "Bittrex"]
+__all__ = ["analysis", "Market", "visual", "Bittrex"]
 
 from analysis import Bittrex
+from market import Market
 import analysis
-import market
 import visual

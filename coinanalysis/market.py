@@ -51,7 +51,7 @@ class Market(object):
 
     @property
     def summary(self):
-        if not self._summary:
+        if self._summary is None:
             response = self.bittrex.get_market_summary(self.name)
             if response['success']:
                 self._summary = response['result'][0]
@@ -67,7 +67,7 @@ class Market(object):
         Columns of the returned DataFrame are:
         "FillType", "Id", "OrderType", "Price", "Quantity", "TimeStamp" and "Total"
         """
-        if not self._history:
+        if self._history is None:
             response = self.bittrex.get_market_history(self.name)
             if response['success']:
                 self._history = pd.DataFrame(response['result'])
@@ -84,7 +84,7 @@ class Market(object):
         Returns a dictionary of prices with keys "Last", "Bid" and "Ask".
         :return: dict
         """
-        if not self._ticker:
+        if self._ticker is None:
             response = self.bittrex.get_ticker(self.name)
             if response['success']:
                 self._ticker = response['result']
@@ -103,17 +103,17 @@ class Market(object):
         )
 
     def get_buy_orderbook(self, depth=20):
-        if not self._buy_orderbook:
+        if self._buy_orderbook is None:
             self._buy_orderbook = self._get_orderbook(BUY_ORDERBOOK, depth)
         return self._buy_orderbook
 
     def get_sell_orderbook(self, depth=20):
-        if not self._sell_orderbook:
+        if self._sell_orderbook is None:
             self._sell_orderbook = self._get_orderbook(SELL_ORDERBOOK, depth)
         return self._sell_orderbook
 
     def get_both_orderbooks(self, depth=20):
-        if not self._both_orderbooks:
+        if self._both_orderbooks is None:
             response = self.bittrex.get_orderbook(self.name, BOTH_ORDERBOOK, depth)
             if response['success']:
                 self._both_orderbooks = {

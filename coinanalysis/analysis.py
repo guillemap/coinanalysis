@@ -8,7 +8,6 @@ import bittrex
 
 
 class Bittrex(bittrex.Bittrex):
-
     def get_highest_volume_markets(self, number=10, base_volume=True, basis=None):
         """
         Used to obtain the highest volume markets on Bittrex, sorted from highest volume to lowest volume
